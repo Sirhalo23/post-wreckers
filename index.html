@@ -130,6 +130,7 @@ input[type=url]:focus{outline:2px solid var(--accent);outline-offset:0;border-co
     </div>
    </div>
     <div class="acts">
+      <button class="act" id="b-one" hidden>Drop 1</button>
       <button class="act" id="b-crowd" hidden>Drop 10</button>
       <button class="act" id="b-clear">Clear crew</button>
       <button class="act" id="b-rebuild">Rebuild post</button>
@@ -735,7 +736,7 @@ function setWeapon(w){weapon=w;document.querySelectorAll('[data-weapon]').forEac
 const coarse=matchMedia('(pointer:coarse)').matches;let aimShown=false;
 function setGameMode(m){gameMode=m;firing=false;
   $('#mode-play').setAttribute('aria-selected',m==='play');$('#mode-crew').setAttribute('aria-selected',m==='crew');
-  $('#weapons').hidden=m!=='play';$('#crewtools').hidden=m!=='crew';$('#b-crowd').hidden=m!=='crew';
+  $('#weapons').hidden=m!=='play';$('#crewtools').hidden=m!=='crew';$('#b-crowd').hidden=m!=='crew';$('#b-one').hidden=m!=='crew';
   $('#padBar').classList.toggle('on',m==='play');
   $('#hint').textContent=m==='play'
     ?(coarse?'TOUCH THE POST TO SHOOT OR SLASH · BUTTONS BELOW: ◀ ▶ MOVE · ▲ JUMP, HOLD TO FLY · G GRENADE':'A/D MOVE · W OR SPACE JUMP, HOLD TO FLY · S DROP DOWN · CLICK TO SHOOT OR SLASH · RIGHT-CLICK OR G GRENADE · 1–5 WEAPONS')
@@ -764,6 +765,7 @@ document.querySelectorAll('.padbar [data-k]').forEach(b=>{const k=b.dataset.k;
   b.addEventListener('contextmenu',e=>e.preventDefault());});
 $('#padNade').addEventListener('pointerdown',e=>{e.preventDefault();audio();throwNade();});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
+$('#b-one').addEventListener('click',()=>{audio();spawn(tool==='grab'?'brawler':tool,cardBox.x+Math.random()*cardBox.w,-10+Math.random()*50);});
 $('#b-crowd').addEventListener('click',()=>{audio();const ty=tool==='grab'?'brawler':tool;for(let i=0;i<10;i++)spawn(ty,cardBox.x+Math.random()*cardBox.w,-10+Math.random()*60);});
 $('#b-clear').addEventListener('click',()=>{figs=[];bombs=[];held=null;updateMeter();});
 $('#b-rebuild').addEventListener('click',()=>{build();});
