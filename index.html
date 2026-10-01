@@ -836,9 +836,13 @@ function setGameMode(m){gameMode=m;firing=false;
   $('#mode-play').setAttribute('aria-selected',m==='play');$('#mode-crew').setAttribute('aria-selected',m==='crew');
   $('#weapons').hidden=m!=='play';$('#crewtools').hidden=m!=='crew';$('#b-crowd').hidden=m!=='crew';$('#b-one').hidden=m!=='crew';
   $('#padBar').classList.toggle('on',m==='play');
-  $('#hint').textContent=m==='play'
-    ?(coarse?'TOUCH THE POST TO SHOOT OR SLASH · BUTTONS BELOW: ◀ ▶ MOVE · ▲ JUMP, HOLD TO FLY · G GRENADE · F SUPLEX A CREW MEMBER':'A/D MOVE · W OR SPACE JUMP, HOLD TO FLY · S DROP DOWN · CLICK TO SHOOT OR SLASH · RIGHT-CLICK OR G GRENADE · F SUPLEX A CREW MEMBER · 1–5 WEAPONS')
-    :'CLICK TO DROP · HOLD TO POUR · 1–4 PICK CREW';
+  // Each control stays on one line; the hint only wraps between controls.
+  const hintItems=m==='play'
+    ?(coarse?['TOUCH THE POST TO SHOOT OR SLASH','BUTTONS BELOW: ◀ ▶ MOVE','▲ JUMP, HOLD TO FLY','G GRENADE','F SUPLEX A CREW MEMBER']
+            :['A/D MOVE','W OR SPACE JUMP, HOLD TO FLY','S DROP DOWN','CLICK TO SHOOT OR SLASH','RIGHT-CLICK OR G GRENADE','F SUPLEX A CREW MEMBER','1–5 WEAPONS'])
+    :['CLICK TO DROP','HOLD TO POUR','1–4 PICK CREW'];
+  const hintEl=$('#hint');hintEl.textContent='';
+  hintItems.forEach((t,i)=>{if(i)hintEl.append(' · ');const sp=document.createElement('span');sp.style.whiteSpace='nowrap';sp.textContent=t;hintEl.append(sp);});
   if(m==='play'&&(hero.y>GROUND||hero.y<-200))placeHero();
   setTool(tool);}
 function blurAfterClick(e){if(e.detail>0&&document.activeElement)document.activeElement.blur();}
