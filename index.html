@@ -523,7 +523,7 @@ const WEAPONS={
   rifle:{cd:.075,n:1,dmg:.6,sp:1150,spread:.06,life:1.2,kick:12},
   shotgun:{cd:.62,n:7,dmg:.75,sp:850,spread:.32,life:.38,kick:170},
   rocket:{cd:.95,n:1,dmg:0,sp:540,spread:0,life:3,kick:110,rocket:true},
-  sword:{cd:.3,melee:true,dmg:2.4,reach:38,arc:2.0,lunge:150,swing:.16}
+  sword:{melee:true}
 };
 let gameMode='play',weapon='pistol',firing=false,bullets=[],nades=[];
 const hero={x:40,y:0,vx:0,vy:0,grounded:false,face:1,fuel:1,anim:0,cd:0,dropT:0,jt:0,nadeCd:0,flying:false};
@@ -534,7 +534,7 @@ function heroSurface(){return hero.y>=GROUND-.5||(hero.dropT<=0&&!!supportBlock(
 function stepTop(x,y){let top=Infinity;query(x-1,y-30,x+1,y,b=>{if(!b.bg&&x>=b.x&&x<=b.x+b.w&&b.y<y-.5&&b.y+b.h>y-30)top=Math.min(top,b.y);});return top;}
 function updateHero(dt){
   const h=hero,s=1.1;
-  h.cd-=dt;h.nadeCd-=dt;h.dropT-=dt;h.swingT=Math.max(0,(h.swingT||0)-dt);
+  h.cd-=dt;h.nadeCd-=dt;h.dropT-=dt;h.swingT=Math.max(0,(h.swingT||0)-dt);h.comboT=Math.max(0,(h.comboT||0)-dt);h.readyT=Math.max(0,(h.readyT||0)-dt);
   const want=(keys.right?1:0)-(keys.left?1:0);
   if(want)h.vx+=(want*215-h.vx)*Math.min(1,dt*(h.grounded?12:3.5));
   else{h.vx*=Math.pow(h.grounded?.0004:.35,dt);if(Math.abs(h.vx)<4)h.vx=0;}
@@ -560,19 +560,35 @@ function updateHero(dt){
   if(firing&&h.cd<=0)fire();
 }
 function gunAngle(){return Math.atan2(aim.y-(hero.y-22),aim.x-hero.x);}
+// Sword combo: keep attacking within the window to chain these four moves.
+// Angles are relative to the aim direction; negative = above the aim line.
+const SWORD_COMBO=[
+  {kind:'arc',from:-1.25,to:1.0,reach:38,dmg:2.2,lunge:110,dur:.14,cd:.2,label:''},
+  {kind:'arc',from:1.1,to:-1.35,reach:40,dmg:2.4,lunge:110,dur:.14,cd:.2,label:''},
+  {kind:'spin',reach:46,dmg:3,lunge:40,dur:.3,cd:.3,label:'SPIN'},
+  {kind:'thrust',reach:62,width:.55,dmg:5,lunge:380,dur:.2,cd:.5,label:'FINISHER'}
+];
 function slash(a){
-  const h=hero,w=WEAPONS.sword,sx=h.x,sy=h.y-22,half=w.arc/2;
-  h.cd=w.cd;h.swingT=w.swing;h.swingA=a;h.swingDir=-(h.swingDir||1);
-  const inArc=(px,py)=>{if(Math.hypot(px-sx,py-sy)<2)return true;let da=Math.atan2(py-sy,px-sx)-a;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<=half;};
+  const h=hero,i=h.comboT>0?((h.combo||0)+1)%SWORD_COMBO.length:0,m=SWORD_COMBO[i];
+  const face=Math.cos(a)>=0?1:-1,sx=h.x,sy=h.y-22;
+  h.combo=i;h.swing=m;h.swingT=m.dur;h.swingA=a;h.swingFace=face;h.cd=m.cd;h.comboT=m.cd+.45;h.readyT=m.dur+1.1;
+  let center=a,half;
+  if(m.kind==='arc'){center=a+face*(m.from+m.to)/2;half=Math.abs(m.to-m.from)/2+.15;}
+  else if(m.kind==='spin')half=Math.PI+.01;else half=m.width/2;
+  const inArc=(px,py)=>{if(Math.hypot(px-sx,py-sy)<2)return true;let da=Math.atan2(py-sy,px-sx)-center;da=Math.atan2(Math.sin(da),Math.cos(da));return Math.abs(da)<=half;};
   let hits=0;const cand=[];
-  query(sx-w.reach,sy-w.reach,sx+w.reach,sy+w.reach,b=>{if(b.bg&&fgAlive>0)return;const px=clamp(sx,b.x,b.x+b.w),py=clamp(sy,b.y,b.y+b.h);
-    if(Math.hypot(px-sx,py-sy)<=w.reach&&inArc(px,py))cand.push(b);});
-  for(const b of cand){hitBlock(b,w.dmg,sx,sy,false);hits++;}
+  query(sx-m.reach,sy-m.reach,sx+m.reach,sy+m.reach,b=>{if(b.bg&&fgAlive>0)return;const px=clamp(sx,b.x,b.x+b.w),py=clamp(sy,b.y,b.y+b.h);
+    if(Math.hypot(px-sx,py-sy)<=m.reach&&inArc(px,py))cand.push(b);});
+  for(const b of cand){hitBlock(b,m.dmg,sx,sy,m.kind==='thrust');hits++;}
   for(const f of figs){if(f.state==='held')continue;const fx=f.x,fy=f.y-15;
-    if(Math.hypot(fx-sx,fy-sy)<=w.reach+6&&inArc(fx,fy)){f.state='rag';f.grounded=false;f.vx=Math.cos(a)*420;f.vy=Math.min(-220,Math.sin(a)*420-120);f.va=(Math.random()-.5)*18;f.target=null;hits++;}}
-  h.vx+=Math.cos(a)*w.lunge;if(!h.grounded)h.vy+=Math.sin(a)*w.lunge*.5;
-  for(let i=0;i<5;i++){const t=a+(Math.random()-.5)*w.arc;parts.push({k:'spark',x:sx+Math.cos(t)*w.reach*.85,y:sy+Math.sin(t)*w.reach*.85,vx:Math.cos(t)*80,vy:Math.sin(t)*80,life:.12,max:.12,col:C.accent});}
-  sfx('swish');if(hits){sfx('punch');shake=Math.max(shake,2);}
+    if(Math.hypot(fx-sx,fy-sy)<=m.reach+6&&inArc(fx,fy)){const k=420+90*i,ka=Math.atan2(fy-sy,fx-sx);f.state='rag';f.grounded=false;f.vx=Math.cos(ka)*k;f.vy=Math.min(-220,Math.sin(ka)*k-120);f.va=(Math.random()-.5)*18;f.target=null;hits++;}}
+  h.vx+=Math.cos(a)*m.lunge;if(!h.grounded)h.vy+=Math.sin(a)*m.lunge*.5;
+  if(m.kind==='spin'&&!h.grounded)h.vy=Math.min(h.vy,-140);
+  for(let n=0;n<6;n++){const t=m.kind==='spin'?Math.random()*TAU:center+(Math.random()-.5)*half*2;
+    parts.push({k:'spark',x:sx+Math.cos(t)*m.reach*.85,y:sy+Math.sin(t)*m.reach*.85,vx:Math.cos(t)*90,vy:Math.sin(t)*90,life:.12,max:.12,col:C.accent});}
+  sfx('swish');
+  if(hits){sfx(i===3?'hammer':'punch');shake=Math.max(shake,i===3?5:2);}
+  if(m.label)parts.push({k:'txt',t:m.label,x:sx,y:sy-28,vy:-40,life:.6,max:.6});
 }
 function fire(){
   if(WEAPONS[weapon].melee){slash(gunAngle());return;}
@@ -607,36 +623,73 @@ function updateBullets(dt){
     const ny=n.y+n.vy*dt;if(n.vy>0){const ly=landY(n.x,n.y,ny);if(ly!=null){n.y=ly;n.vy=Math.abs(n.vy)>120?-n.vy*.4:0;n.vx*=.6;}else n.y=ny;}else n.y=ny;
     if(n.fuse<=0){nades.splice(i,1);explode(n.x,n.y-5,62);}}
 }
+function drawBlade(A,bx,by){
+  const seg=(w,x0,y0,x1,y1)=>{ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();};
+  const g=[A[0]+bx*1.5,A[1]+by*1.5];
+  for(const halo of [true,false]){
+    ctx.strokeStyle=halo?C.paper:C.ink;ctx.globalAlpha=halo?.85:1;const e=halo?2.5:0;
+    ctx.lineCap='round';seg(3+e,A[0]-bx*3,A[1]-by*3,g[0],g[1]);
+    seg(2+e,g[0]-by*4,g[1]+bx*4,g[0]+by*4,g[1]-bx*4);
+    ctx.lineCap='butt';seg(2.2+e,A[0]+bx*2,A[1]+by*2,A[0]+bx*24,A[1]+by*24);
+  }
+  ctx.globalAlpha=1;
+}
 function drawHero(){
-  const h=hero,s=1.1,tt=performance.now()/1000;
-  const sword=weapon==='sword',W5=WEAPONS.sword;let la=Math.atan2(aim.y-(h.y-22),(aim.x-h.x)*h.face),wa=null;
-  if(sword&&h.swingT>0){const p=1-h.swingT/W5.swing;wa=h.swingA+h.swingDir*(p-.5)*W5.arc;la=Math.atan2(Math.sin(wa),Math.cos(wa)*h.face);}
-  else if(sword)la-=.45;
-  const dx=Math.cos(la),dy=Math.sin(la);
-  let L1,L2;const air=!h.grounded;
+  const h=hero,s=1.1,tt=performance.now()/1000,sword=weapon==='sword';
+  let face=h.face,la=Math.atan2(aim.y-(h.y-22),(aim.x-h.x)*face),ext=10,mode='gun',wa=null,sw=null,pe=0;
+  if(sword){
+    if(h.swingT>0){sw=h.swing;const p=1-h.swingT/sw.dur;pe=1-(1-p)*(1-p);mode='swing';
+      if(sw.kind==='arc')wa=h.swingA+h.swingFace*(sw.from+(sw.to-sw.from)*pe);
+      else if(sw.kind==='spin'){wa=h.swingA+h.swingFace*(-Math.PI/2+TAU*pe);face=h.swingFace*(Math.cos(TAU*pe)>=0?1:-1);}
+      else{wa=h.swingA;ext=6+10*Math.min(1,p*2.5);}
+      la=Math.atan2(Math.sin(wa),Math.cos(wa)*face);
+    }else mode=(h.readyT||0)>0?'ready':'back';
+  }
+  const dx=Math.cos(la),dy=Math.sin(la),air=!h.grounded,mv=Math.abs(h.vx)>5;
+  let L1,L2,A1,A2;
   if(h.flying){const w=Math.sin(tt*20)*1.5;L1=[-2,1+w];L2=[2,1-w];}
   else if(air){L1=[-5,-3];L2=[5,-1];}
-  else{const sw=Math.abs(h.vx)>5?Math.sin(h.anim):0;L1=[sw*6,0];L2=[-sw*6,0];}
-  const A2=[dx*10,-20+dy*10],A1=[dx*7+2,-20+dy*7+2.5];
+  else if(mode==='swing'){L1=sw.kind==='thrust'?[-9,0]:[-6,0];L2=sw.kind==='thrust'?[9,0]:[7,0];}
+  else if(mode==='ready'&&!mv){L1=[-5,0];L2=[6,0];}
+  else{const k=mv?Math.sin(h.anim):0;L1=[k*6,0];L2=[-k*6,0];}
+  if(mode==='gun'){A2=[dx*10,-20+dy*10];A1=[dx*7+2,-20+dy*7+2.5];}
+  else if(mode==='swing'){A2=[dx*ext,-20+dy*ext];A1=[dx*ext*.7,-20+dy*ext*.7+1.5];}
+  else if(mode==='ready'){A2=[7,-15];A1=[5,-13.5];}
+  else if(air){A1=[-8,-26];A2=[8,-25];}
+  else{const k=mv?Math.sin(h.anim):0;A1=[-k*5,-10.5];A2=[k*5,-10.5];}
   const gl=weapon==='rocket'?15:weapon==='rifle'||weapon==='shotgun'?13:8;
-  ctx.save();ctx.translate(h.x,h.y);ctx.scale(s*h.face,s);
+  ctx.save();ctx.translate(h.x,h.y);ctx.scale(s*face,s);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  // sword on the back: drawn first so the body sits in front of it
+  if(mode==='back'){
+    // hangs behind the jetpack: tip low at the back, hilt up beside the head
+    const bob=mv&&!air?Math.sin(h.anim*2)*.6:0,tip=[-15,-3+bob],gd=[-8,-24+bob],ux=(gd[0]-tip[0]),uy=(gd[1]-tip[1]),ul=Math.hypot(ux,uy),bx=ux/ul,by=uy/ul;
+    const bs=new Path2D();bs.moveTo(tip[0],tip[1]);bs.lineTo(gd[0],gd[1]);
+    const gp=new Path2D();gp.moveTo(gd[0]-by*3.5,gd[1]+bx*3.5);gp.lineTo(gd[0]+by*3.5,gd[1]-bx*3.5);
+    const gr=new Path2D();gr.moveTo(gd[0],gd[1]);gr.lineTo(gd[0]+bx*5.5,gd[1]+by*5.5);
+    ctx.globalAlpha=.85;ctx.strokeStyle=C.paper;ctx.lineWidth=4.5;ctx.stroke(bs);ctx.stroke(gp);ctx.lineWidth=5.5;ctx.stroke(gr);ctx.globalAlpha=1;
+    ctx.strokeStyle=C.ink;ctx.lineWidth=2.2;ctx.lineCap='butt';ctx.stroke(bs);ctx.lineCap='round';ctx.lineWidth=2;ctx.stroke(gp);ctx.lineWidth=3;ctx.stroke(gr);
+  }
   const path=new Path2D();path.moveTo(0,-12);path.lineTo(L1[0],L1[1]);path.moveTo(0,-12);path.lineTo(L2[0],L2[1]);
   path.moveTo(0,-12);path.lineTo(0,-22);path.moveTo(0,-20);path.lineTo(A1[0],A1[1]);path.moveTo(0,-20);path.lineTo(A2[0],A2[1]);
-  ctx.lineCap='round';ctx.lineJoin='round';
   ctx.globalAlpha=.85;ctx.strokeStyle=C.paper;ctx.lineWidth=5;ctx.stroke(path);ctx.beginPath();ctx.arc(0,-27,6.8,0,TAU);ctx.fillStyle=C.paper;ctx.fill();ctx.globalAlpha=1;
   ctx.fillStyle=C.muted;ctx.fillRect(-6.5,-21,4,9);
   if(h.flying){ctx.fillStyle=Math.random()<.5?C.accent:C.danger;ctx.beginPath();ctx.moveTo(-6.5,-12);ctx.lineTo(-2.5,-12);ctx.lineTo(-4.5,-5-Math.random()*5);ctx.fill();}
   ctx.strokeStyle=C.ink;ctx.lineWidth=2.3;ctx.stroke(path);
   ctx.beginPath();ctx.arc(0,-27,4.6,0,TAU);ctx.fillStyle=C.paper;ctx.fill();ctx.stroke();
   ctx.strokeStyle=C.accent;ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-4.6,-22.5);ctx.lineTo(3,-22.5);ctx.moveTo(-3,-22.5);ctx.lineTo(-9-Math.abs(h.vx)*.02,-24+Math.sin(tt*12)*2);ctx.stroke();
-  if(sword){ctx.strokeStyle=C.ink;ctx.lineCap='round';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(A2[0]-dx*3,A2[1]-dy*3);ctx.lineTo(A2[0]+dx*1.5,A2[1]+dy*1.5);ctx.stroke();
-    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(A2[0]+dx*1.5-dy*4,A2[1]+dy*1.5+dx*4);ctx.lineTo(A2[0]+dx*1.5+dy*4,A2[1]+dy*1.5-dx*4);ctx.stroke();
-    ctx.lineWidth=2.2;ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(A2[0]+dx*2,A2[1]+dy*2);ctx.lineTo(A2[0]+dx*22,A2[1]+dy*22);ctx.stroke();}
-  else{ctx.strokeStyle=C.ink;ctx.lineWidth=weapon==='rocket'?4.5:weapon==='pistol'?2.6:3;ctx.lineCap='butt';
+  if(mode==='gun'){ctx.strokeStyle=C.ink;ctx.lineWidth=weapon==='rocket'?4.5:weapon==='pistol'?2.6:3;ctx.lineCap='butt';
     ctx.beginPath();ctx.moveTo(A2[0]-dx*2,A2[1]-dy*2);ctx.lineTo(A2[0]+dx*gl,A2[1]+dy*gl);ctx.stroke();}
+  else if(mode==='swing')drawBlade(A2,dx,dy);
+  else if(mode==='ready')drawBlade(A2,Math.cos(-1.15),Math.sin(-1.15));
   ctx.restore();
-  if(wa!=null){ctx.globalAlpha=Math.min(1,h.swingT/W5.swing*1.2)*.8;ctx.strokeStyle=C.accent;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
-    ctx.arc(h.x,h.y-22,W5.reach-6,h.swingA-h.swingDir*W5.arc/2,wa,h.swingDir<0);ctx.stroke();ctx.globalAlpha=1;}
+  // swing trails, in page coordinates
+  if(mode==='swing'){const cx=h.x,cy=h.y-22;ctx.globalAlpha=.25+.65*(1-pe);ctx.strokeStyle=C.accent;ctx.lineCap='round';
+    if(sw.kind==='arc'){ctx.lineWidth=3.5;ctx.beginPath();const a0=h.swingA+h.swingFace*sw.from;ctx.arc(cx,cy,sw.reach-6,a0,wa,h.swingFace*(sw.to-sw.from)<0);ctx.stroke();}
+    else if(sw.kind==='spin'){ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,cy,sw.reach-8,h.swingA-h.swingFace*Math.PI/2,wa,h.swingFace<0);ctx.stroke();}
+    else{const c=Math.cos(wa),sn=Math.sin(wa);ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(cx+c*14,cy+sn*14);ctx.lineTo(cx+c*sw.reach,cy+sn*sw.reach);ctx.stroke();
+      ctx.lineWidth=1.5;for(const o of [-5,5]){ctx.beginPath();ctx.moveTo(cx+c*10-sn*o,cy+sn*10+c*o);ctx.lineTo(cx+c*(sw.reach-12)-sn*o,cy+sn*(sw.reach-12)+c*o);ctx.stroke();}}
+    ctx.globalAlpha=1;}
   // fuel gauge while it's not full
   if(h.fuel<.99){ctx.fillStyle=C['grid-strong'];ctx.fillRect(h.x-10,h.y+5,20,3);ctx.fillStyle=h.fuel<.25?C.danger:C.accent;ctx.fillRect(h.x-10,h.y+5,20*h.fuel,3);}
 }
