@@ -102,9 +102,8 @@ input[type=url]:focus{outline:2px solid var(--accent);outline-offset:0;border-co
   </header>
 
   <form class="linkbar" id="linkForm" novalidate>
-    <label class="lab" for="postUrl" style="color:var(--muted)">Post link</label>
     <div class="lrow">
-      <input type="url" id="postUrl" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://x.com/username/status/1234567890">
+      <input type="url" id="postUrl" aria-label="Post link" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://x.com/username/status/1234567890">
       <button class="primary" id="b-fetch" type="submit">Wreck it</button>
     </div>
     <p class="msg" id="fetchMsg" role="status"></p>
