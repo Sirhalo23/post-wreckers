@@ -74,11 +74,12 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .bar i[data-low="true"]{background:var(--danger)}
 
 .railL{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.pad{position:absolute;bottom:46px;display:none;gap:8px;touch-action:none}
-.pad.l{left:10px}.pad.r{right:10px}
-@media (pointer:coarse){.pad.on{display:flex}}
-.pad button{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 82%,transparent);color:var(--ink);font:700 17px var(--ui);touch-action:none;user-select:none;-webkit-user-select:none}
-.pad button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.padbar{display:none;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--line);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+@media (pointer:coarse){.padbar.on{display:flex}}
+.padbar .grp{display:flex;gap:10px}
+.padbar button{width:58px;height:58px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 18px var(--ui);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.padbar button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#stage{-webkit-touch-callout:none}
 .hint{max-width:calc(100% - 20px);line-height:1.5}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--panel)}
 .seg button{border:0;background:none;padding:6px 12px;border-radius:6px;font-size:13.5px;color:var(--muted)}
@@ -140,9 +141,11 @@ input[type=url]:focus{outline:2px solid var(--accent);outline-offset:0;border-co
     <div class="stageWrap" id="stageWrap">
       <canvas id="stage" aria-label="The post on a demolition site. Click or tap to drop the selected crew member; hold to pour."></canvas>
       <div class="hint" id="hint"></div>
-      <div class="pad l on" id="padL"><button data-k="left" aria-label="Move left">◀</button><button data-k="right" aria-label="Move right">▶</button><button data-k="jump" aria-label="Jump, hold to fly">▲</button></div>
-      <div class="pad r on" id="padR"><button id="padNade" aria-label="Throw grenade">G</button></div>
       <div class="toast" id="toast" style="opacity:0"></div>
+    </div>
+    <div class="padbar on" id="padBar">
+      <div class="grp"><button data-k="left" aria-label="Move left">◀</button><button data-k="right" aria-label="Move right">▶</button></div>
+      <div class="grp"><button id="padNade" aria-label="Throw grenade">G</button><button data-k="jump" aria-label="Jump, hold to fly">▲</button></div>
     </div>
     <div class="readout" aria-live="off">
       <span class="lab">Post integrity</span>
@@ -247,7 +250,7 @@ function buildText(){
   const colW=tw/4;
   [['reply',post.replies],['repost',post.reposts],['like',post.likes],['views',post.views]].forEach(([ic,v],i)=>{
     const ix=Math.round(tx+i*colW);items.push({k:'icon',ic,x:ix,y,w:18,h:18});
-    if(v){mctx.font=F_NUM;const t=fit(String(v),colW-30);const w=mctx.measureText(t).width;items.push({k:'text',x:ix+23,y,w,h:18,t,f:F_NUM,c:'card-muted'});}
+    if(v){mctx.font=F_NUM;const t=fit(String(v),colW-25);const w=mctx.measureText(t).width;items.push({k:'text',x:ix+23,y,w,h:18,t,f:F_NUM,c:'card-muted'});}
   });
   y+=18;
   const cardH=Math.ceil(y+pad);
@@ -707,9 +710,9 @@ const coarse=matchMedia('(pointer:coarse)').matches;let aimShown=false;
 function setGameMode(m){gameMode=m;firing=false;
   $('#mode-play').setAttribute('aria-selected',m==='play');$('#mode-crew').setAttribute('aria-selected',m==='crew');
   $('#weapons').hidden=m!=='play';$('#crewtools').hidden=m!=='crew';$('#b-crowd').hidden=m!=='crew';
-  $('#padL').classList.toggle('on',m==='play');$('#padR').classList.toggle('on',m==='play');
+  $('#padBar').classList.toggle('on',m==='play');
   $('#hint').textContent=m==='play'
-    ?(coarse?'◀ ▶ MOVE · ▲ JUMP, HOLD TO FLY · TOUCH THE POST TO SHOOT · G GRENADE':'A/D MOVE · W OR SPACE JUMP, HOLD TO FLY · S DROP DOWN · CLICK TO SHOOT · RIGHT-CLICK OR G GRENADE · 1–4 WEAPONS')
+    ?(coarse?'TOUCH THE POST TO SHOOT · BUTTONS BELOW: ◀ ▶ MOVE · ▲ JUMP, HOLD TO FLY · G GRENADE':'A/D MOVE · W OR SPACE JUMP, HOLD TO FLY · S DROP DOWN · CLICK TO SHOOT · RIGHT-CLICK OR G GRENADE · 1–4 WEAPONS')
     :'CLICK TO DROP · HOLD TO POUR · 1–4 PICK CREW';
   if(m==='play'&&(hero.y>GROUND||hero.y<-200))placeHero();
   setTool(tool);}
@@ -728,7 +731,7 @@ document.addEventListener('keydown',e=>{if(e.target.closest('input,textarea'))re
 });
 document.addEventListener('keyup',e=>{const a=KEYMAP[e.key.toLowerCase()];if(a)keys[a]=false;});
 window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=false;firing=false;});
-document.querySelectorAll('.pad [data-k]').forEach(b=>{const k=b.dataset.k;
+document.querySelectorAll('.padbar [data-k]').forEach(b=>{const k=b.dataset.k;
   const on=e=>{e.preventDefault();audio();if(k==='jump'&&!keys.jump)jumpEdge=true;keys[k]=true;b.classList.add('on');try{b.setPointerCapture(e.pointerId);}catch(_){}};
   const off=()=>{keys[k]=false;b.classList.remove('on');};
   b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('lostpointercapture',off);
@@ -740,6 +743,7 @@ $('#b-clear').addEventListener('click',()=>{figs=[];bombs=[];held=null;updateMet
 $('#b-rebuild').addEventListener('click',()=>{build();});
 $('#b-sound').addEventListener('click',e=>{soundOn=!soundOn;e.currentTarget.setAttribute('aria-pressed',soundOn);e.currentTarget.textContent=soundOn?'Sound':'Sound off';if(soundOn)audio();});
 
+document.addEventListener('touchend',audio,{passive:true});document.addEventListener('click',audio);
 /* pointer */
 let ptr={down:false,x:0,y:0,vx:0,vy:0,lt:0},held=null,pourT=0;
 function pos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
