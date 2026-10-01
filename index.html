@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: one column. Name strip, tool rail, the demolition site (graph-paper canvas with hazard tape), a readout strip, then the post editor. */
+/* Layout: one column. Name strip, tool rail, the demolition site (graph-paper canvas with hazard tape), then a readout strip. */
 :root{
   --paper:#F2F3EE; --grid:#E0E4DB; --grid-strong:#CBD1C4; --ink:#1B1E23; --muted:#5B6169; --line:#C4CABD; --panel:#FAFBF8;
   --accent:#F2B705; --accent-ink:#1B1E23; --danger:#C9391F;
@@ -51,7 +51,7 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(30px,6vw,44px);lin
 .rail{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
 .tools,.acts{display:flex;flex-wrap:wrap;gap:6px}
 button{font:inherit;color:inherit;cursor:pointer}
-button:focus-visible,.filebtn:focus-within,.drop:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .tool{display:flex;align-items:center;gap:7px;padding:6px 11px 6px 8px;border:1px solid var(--line);background:var(--panel);border-radius:8px;font-family:var(--display);font-weight:600;font-size:14.5px;line-height:1}
 .tool svg{width:22px;height:22px;flex:none}
 .tool kbd{font:500 10.5px var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 4px}
@@ -83,37 +83,14 @@ button:focus-visible,.filebtn:focus-within,.drop:focus-within{outline:2px solid 
 .pad button{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 82%,transparent);color:var(--ink);font:700 17px var(--ui);touch-action:none;user-select:none;-webkit-user-select:none}
 .pad button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .hint{max-width:calc(100% - 20px);line-height:1.5}
-.editor{display:flex;flex-direction:column;gap:12px;margin-top:10px}
-.edhead{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
-h2{font-family:var(--display);font-weight:800;font-size:23px;margin:0;letter-spacing:-.01em}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--panel)}
 .seg button{border:0;background:none;padding:6px 12px;border-radius:6px;font-size:13.5px;color:var(--muted)}
 .seg button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
-.note{margin:0;color:var(--muted);font-size:13.5px;max-width:70ch}
-.fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px}
-.f{display:flex;flex-direction:column;gap:4px;min-width:0}
-.f>span{font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.s2{grid-column:span 2}.s4{grid-column:1/-1}
-input[type=text],input[type=url],textarea{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:15px/1.4 var(--ui)}
-textarea{resize:vertical;min-height:110px}
-input[type=text]:focus,input[type=url]:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
-.files{display:flex;flex-wrap:wrap;gap:10px}
-.filebox{display:flex;align-items:center;gap:8px;flex:1 1 240px;min-width:0;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--panel)}
-.filebtn{position:relative;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:13px;background:var(--paper);white-space:nowrap}
-.filebtn input,.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-.fname{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
-.x{border:0;background:none;color:var(--muted);font-size:13px;padding:4px 6px;border-radius:4px}
-.x:hover{color:var(--danger)}
-.drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;border:1.5px dashed var(--grid-strong);border-radius:8px;padding:26px 16px;background:var(--panel);min-height:150px}
-.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
-.drop strong{font-family:var(--display);font-size:17px}
-.drop img{max-height:140px;max-width:100%;border-radius:4px;border:1px solid var(--line)}
-.load{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+input[type=url]{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:15px/1.4 var(--ui)}
+input[type=url]:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
 .primary{background:var(--ink);color:var(--paper);border:0;border-radius:8px;padding:10px 16px;font-family:var(--display);font-weight:600;font-size:15px}
 .msg{font-size:13.5px;color:var(--muted)}
 @media (max-width:600px){
-  .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .s2{grid-column:1/-1}
   .tool{padding:6px 9px 6px 6px;font-size:13.5px}
   .tool kbd{display:none}
 }
@@ -181,49 +158,6 @@ input[type=text]:focus,input[type=url]:focus,textarea:focus{outline:2px solid va
     </div>
   </section>
 
-  <section class="editor" aria-labelledby="edh">
-    <div class="edhead">
-      <h2 id="edh">Your post</h2>
-      <div class="seg" role="tablist" aria-label="How to load the post">
-        <button role="tab" id="m-text" aria-selected="true" aria-controls="p-text">Type it in</button>
-        <button role="tab" id="m-shot" aria-selected="false" aria-controls="p-shot">Use a screenshot</button>
-      </div>
-    </div>
-    <p class="note">A link fills these in for you. You can also type a post in by hand, tweak what a link loaded, or use a screenshot: paste one anywhere on the page with Ctrl+V or ⌘V, or drop the image straight onto the site.</p>
-
-    <div id="p-text" role="tabpanel" aria-labelledby="m-text">
-      <div class="fields">
-        <label class="f s2"><span>Display name</span><input type="text" id="f-name" autocomplete="off"></label>
-        <label class="f"><span>Handle</span><input type="text" id="f-handle" autocomplete="off"></label>
-        <label class="f"><span>Posted</span><input type="text" id="f-time" autocomplete="off"></label>
-        <label class="f s4"><span>Post text</span><textarea id="f-text" rows="5"></textarea></label>
-        <label class="f"><span>Replies</span><input type="text" id="f-replies" autocomplete="off"></label>
-        <label class="f"><span>Reposts</span><input type="text" id="f-reposts" autocomplete="off"></label>
-        <label class="f"><span>Likes</span><input type="text" id="f-likes" autocomplete="off"></label>
-        <label class="f"><span>Views</span><input type="text" id="f-views" autocomplete="off"></label>
-        <div class="f s4"><span>Images (optional)</span>
-          <div class="files">
-            <div class="filebox"><label class="filebtn">Profile photo<input type="file" accept="image/*" id="f-avatar"></label><span class="fname" id="n-avatar">Initials are used if empty</span><button class="x" id="x-avatar" hidden>Remove</button></div>
-            <div class="filebox"><label class="filebtn">Attached image<input type="file" accept="image/*" id="f-media"></label><span class="fname" id="n-media">None</span><button class="x" id="x-media" hidden>Remove</button></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="p-shot" role="tabpanel" aria-labelledby="m-shot" hidden>
-      <label class="drop" id="drop">
-        <input type="file" accept="image/*" id="f-shot">
-        <img id="shotPrev" alt="Screenshot preview" hidden>
-        <strong id="shotTitle">Drop a screenshot of a post here</strong>
-        <span class="msg" id="shotSub">or click to choose a file. Lines of text become ledges the crew can stand on.</span>
-      </label>
-    </div>
-
-    <div class="load">
-      <button class="primary" id="b-load">Put it on the site</button>
-      <span class="msg" id="loadMsg" role="status"></span>
-    </div>
-  </section>
   <p class="credit">Posts are read from the public data X uses for embedded posts. Nothing you wreck here touches the real post. <span id="origLink"></span></p>
 </main>
 
@@ -828,39 +762,13 @@ function release(){firing=false;if(!ptr.down)return;ptr.down=false;cv.classList.
   if(held){if(performance.now()-ptr.lt>90){ptr.vx*=.2;ptr.vy*=.2;}held.state='rag';held.vx=clamp(ptr.vx,-1800,1800);held.vy=clamp(ptr.vy,-1800,1800);held.va=held.vx*.015+(Math.random()-.5)*4;held.hitCd=0;held=null;}}
 cv.addEventListener('pointerup',release);cv.addEventListener('pointercancel',release);
 
-/* editor */
-const F={name:$('#f-name'),handle:$('#f-handle'),time:$('#f-time'),text:$('#f-text'),replies:$('#f-replies'),reposts:$('#f-reposts'),likes:$('#f-likes'),views:$('#f-views')};
-for(const k in F)F[k].value=post[k];
-function setMode(m){mode=m;$('#m-text').setAttribute('aria-selected',m==='text');$('#m-shot').setAttribute('aria-selected',m==='shot');$('#p-text').hidden=m!=='text';$('#p-shot').hidden=m!=='shot';}
-$('#m-text').addEventListener('click',()=>setMode('text'));
-$('#m-shot').addEventListener('click',()=>setMode('shot'));
+/* screenshots: paste one anywhere, or drop it onto the site */
 function fileToImg(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('bad'));im.src=r.result;};r.onerror=rej;r.readAsDataURL(file);});}
-function bindImg(inp,nameEl,xBtn,prop,emptyText){
-  inp.addEventListener('change',async()=>{const f=inp.files&&inp.files[0];if(!f)return;try{post[prop]=await fileToImg(f);nameEl.textContent=f.name;xBtn.hidden=false;}catch(e){nameEl.textContent='That file could not be read as an image.';}inp.value='';});
-  xBtn.addEventListener('click',()=>{post[prop]=null;nameEl.textContent=emptyText;xBtn.hidden=true;});
-}
-bindImg($('#f-avatar'),$('#n-avatar'),$('#x-avatar'),'avatar','Initials are used if empty');
-bindImg($('#f-media'),$('#n-media'),$('#x-media'),'media','None');
-async function useShot(file,name){try{shotImg=await fileToImg(file);shotName=name||'Pasted screenshot';$('#shotPrev').src=shotImg.src;$('#shotPrev').hidden=false;
-  $('#shotTitle').textContent=shotName;$('#shotSub').textContent=shotImg.width+' × '+shotImg.height+' px. Drop or choose another to replace it.';
-  setMode('shot');build();toast('Screenshot is on the site.');$('#loadMsg').textContent='';}catch(e){$('#loadMsg').textContent='That file could not be read as an image. Try a PNG or JPG.';}}
-$('#f-shot').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f)useShot(f,f.name);e.target.value='';});
-const drop=$('#drop');
-['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
-['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,()=>drop.classList.remove('over')));
-drop.addEventListener('drop',e=>{e.preventDefault();const f=[...(e.dataTransfer.files||[])].find(f=>f.type.startsWith('image/'));if(f)useShot(f,f.name);});
+async function useShot(file){try{shotImg=await fileToImg(file);mode='shot';build();toast('Screenshot is on the site.');}catch(e){toast('That file could not be read as an image. Try a PNG or JPG.');}}
 wrap.addEventListener('dragover',e=>e.preventDefault());
-wrap.addEventListener('drop',e=>{e.preventDefault();const f=[...(e.dataTransfer.files||[])].find(f=>f.type.startsWith('image/'));if(f)useShot(f,f.name);});
+wrap.addEventListener('drop',e=>{e.preventDefault();const f=[...(e.dataTransfer.files||[])].find(f=>f.type.startsWith('image/'));if(f)useShot(f);});
 document.addEventListener('paste',e=>{const items=[...(e.clipboardData&&e.clipboardData.items||[])];const im=items.find(i=>i.type.startsWith('image/'));
-  if(im){e.preventDefault();useShot(im.getAsFile(),'Pasted screenshot');return;}
-  if(e.target.closest('input,textarea'))return;
-  const txt=e.clipboardData&&e.clipboardData.getData('text/plain');if(txt&&txt.trim()){e.preventDefault();F.text.value=txt.trim();post.text=txt.trim();setMode('text');build();toast('Pasted text is on the site.');}});
-$('#b-load').addEventListener('click',()=>{
-  if(mode==='shot'&&!shotImg){$('#loadMsg').textContent='Add a screenshot first, or switch to Type it in.';return;}
-  if(mode==='text')for(const k in F)post[k]=F[k].value;
-  build();$('#loadMsg').textContent='';toast('Fresh post on the site.');
-  document.querySelector('.site').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
-});
+  if(im){e.preventDefault();useShot(im.getAsFile());}});
 
 /* theme + resize */
 function onTheme(){readColors();if(rerender)rerender();drawPaper();}
@@ -906,10 +814,7 @@ async function loadFromLink(input,{quiet=false}={}){
     const [av,md]=await Promise.all([data.avatar?loadImg(proxied(data.avatar)):null,data.media?loadImg(proxied(data.media.url)):null]);
     if(seq!==loadSeq)return;
     Object.assign(post,{name:data.name,handle:data.handle,time:relTime(data.createdAt),text:data.text,replies:fmtCount(data.replies),reposts:'',likes:fmtCount(data.likes),views:'',avatar:av,media:md});
-    for(const k in F)F[k].value=post[k];
-    $('#n-avatar').textContent=av?'From the post':'Initials are used if empty';$('#x-avatar').hidden=!av;
-    $('#n-media').textContent=md?'From the post':'None';$('#x-media').hidden=!md;
-    setMode('text');build();
+    mode='text';build();
     fetchMsg.textContent=quiet?'':'Loaded '+data.handle+'. Go wreck it.';
     const user=(data.handle||'@i').slice(1)||'i';
     try{history.replaceState(null,'','/'+encodeURIComponent(user)+'/status/'+data.id);}catch(_){}

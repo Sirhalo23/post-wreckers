@@ -42,7 +42,7 @@ Then open http://localhost:3000.
 - Paste a link anywhere on the page (Ctrl+V or ⌘V) outside a text box.
 - Swap `x.com` for your site's address in any post link, for example `post-wreckers.vercel.app/jack/status/20`.
 - Add `?post=` and a link or post ID to your site's address.
-- No link? Type a post in by hand, or paste or drop a screenshot.
+- No link? Paste a screenshot of a post anywhere on the page (Ctrl+V or ⌘V), or drop the image onto the site.
 
 Links from x.com, twitter.com, mobile.twitter.com, fxtwitter.com and vxtwitter.com all work, with or without extra bits like `?s=20` on the end.
 
