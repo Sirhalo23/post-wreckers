@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/:user/status/:id", "destination": "/index.html" },
+    { "source": "/:user/status/:id/:rest*", "destination": "/index.html" }
+  ]
+}

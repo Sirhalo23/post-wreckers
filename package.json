@@ -1,0 +1,13 @@
+{
+  "name": "post-wreckers",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Paste a link to a post on X, then wreck it with stick figures.",
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
